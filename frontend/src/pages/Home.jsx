@@ -119,23 +119,15 @@ const HomePage = () => {
                           tokens_bought: result.address.tokens_bought || '0',
                           tokens_sold: result.address.tokens_sold || '0'
                         };
-                      } else if (typeof result === 'string') {
-                        walletData = {
-                          address: result,
-                          bought: '$0',
-                          sold: '$0',
-                          pnl: '$0',
-                          tokens_bought: '0',
-                          tokens_sold: '0'
-                        };
                       } else {
+                        // Handle direct object format
                         walletData = {
-                          address: 'Unknown',
-                          bought: '$0',
-                          sold: '$0',
-                          pnl: '$0',
-                          tokens_bought: '0',
-                          tokens_sold: '0'
+                          address: result.address || result || 'Unknown',
+                          bought: result.bought || '$0',
+                          sold: result.sold || '$0',
+                          pnl: result.pnl || '$0',
+                          tokens_bought: result.tokens_bought || '0',
+                          tokens_sold: result.tokens_sold || '0'
                         };
                       }
 
