@@ -227,18 +227,14 @@ def scrape_token_wallets(pair, time_period='30d'):
                 sold_spans = div.find_all('span', class_='chakra-text custom-dv3t8y')
                 pnl_spans = div.find_all(class_='custom-1e9y0rl')
                 
-                # Check for dash elements (no bought amount)
-                dash_elements = div.find_all(class_="chakra-text custom-6qd5i2")
-                has_dash_element = len(dash_elements) > 0
-                
                 # Extract bought amount
-                if has_dash_element:
-                    wallet_data["bought"] = "0"
-                elif bought_spans:
+                if bought_spans:
                     bought_text = bought_spans[0].get_text().strip()
                     if not bought_text.startswith('$'):
                         bought_text = '$' + bought_text
                     wallet_data["bought"] = bought_text
+                else:
+                    wallet_data["bought"] = "$0"
                 
                 # Extract sold amount
                 if sold_spans:
