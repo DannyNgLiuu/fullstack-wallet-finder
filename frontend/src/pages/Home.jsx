@@ -637,7 +637,11 @@ const HomePage = () => {
                 className={`${cardClasses} border rounded-xl p-6`}
               >
                 <h2 className="text-xl font-semibold mb-4">Intersected Addresses</h2>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className={`space-y-3 max-h-96 overflow-y-auto scrollbar-thin ${
+                  isDarkMode 
+                    ? 'scrollbar-thumb-slate-600 scrollbar-track-slate-800 hover:scrollbar-thumb-slate-500' 
+                    : 'scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400'
+                }`}>
                   <AnimatePresence>
                     {results.length > 0 ? (
                       results.map((result, index) => {
@@ -1294,7 +1298,11 @@ const HomePage = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto mb-4">
+              <div className={`flex-1 overflow-y-auto mb-4 scrollbar-thin ${
+                isDarkMode 
+                  ? 'scrollbar-thumb-slate-600 scrollbar-track-slate-800 hover:scrollbar-thumb-slate-500' 
+                  : 'scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400'
+              }`}>
                 <div className="space-y-2">
                   {savedWallets.map((wallet) => (
                     <motion.div
