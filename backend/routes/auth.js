@@ -3,15 +3,37 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import dotenv from 'dotenv';
 import { verifyToken } from '../middleware/auth.js';
 
-dotenv.config();
 const router = express.Router();
+
+// Access control configuration
+const getAccessControl = () => {
+  const isAccessControlEnabled = process.env.ENABLE_ACCESS_CONTROL === 'true';
+  const allowedUsers = isAccessControlEnabled && process.env.ALLOWED_USERS 
+    ? process.env.ALLOWED_USERS.split(',').map(email => email.trim().toLowerCase())
+    : [];
+
+  console.log('Access Control Status:', {
+    isEnabled: isAccessControlEnabled,
+    allowedUsers: allowedUsers
+  });
+  
+  return { isAccessControlEnabled, allowedUsers };
+};
 
 router.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const { isAccessControlEnabled, allowedUsers } = getAccessControl();
+    
+    // Check if email is in allowed users list when access control is enabled
+    if (isAccessControlEnabled && !allowedUsers.includes(email.toLowerCase())) {
+      console.log('Registration denied for:', email.toLowerCase());
+      console.log('Allowed users:', allowedUsers);
+      return res.status(403).json({ message: 'Registration not allowed' });
+    }
+
     const existingUser = await User.findOne({ email });
 
     if (existingUser)
@@ -33,6 +55,20 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const { isAccessControlEnabled, allowedUsers } = getAccessControl();
+
+    // Debug logging for email comparison
+    console.log('Login attempt:', {
+      attemptEmail: email.toLowerCase(),
+      isEnabled: isAccessControlEnabled,
+      allowedUsers: allowedUsers,
+      isAllowed: allowedUsers.includes(email.toLowerCase())
+    });
+
+    // Check if email is in allowed users list when access control is enabled
+    if (isAccessControlEnabled && !allowedUsers.includes(email.toLowerCase())) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
 
     const user = await User.findOne({ email });
     if (!user)
