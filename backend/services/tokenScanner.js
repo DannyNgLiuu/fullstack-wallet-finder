@@ -12,7 +12,7 @@ class TokenScanner {
     this.running = 0;
   }
 
-  async scanTokens(tokens, progressCallback) {
+  async scanTokens(tokens, progressCallback, timePeriod) {
     return new Promise((resolve) => {
       const results = new Map();
       let completed = 0;
@@ -33,7 +33,7 @@ class TokenScanner {
           const token = this.queue.shift();
           this.running++;
 
-          this.scanSingleToken(token)
+          this.scanSingleToken(token, timePeriod)
             .then(wallets => {
               results.set(token, wallets);
               completed++;
@@ -72,10 +72,10 @@ class TokenScanner {
     });
   }
 
-  scanSingleToken(token) {
+  scanSingleToken(token, timePeriod) {
     return new Promise((resolve, reject) => {
       const worker = new Worker(path.join(__dirname, 'scraperWorker.js'), {
-        workerData: { token }
+        workerData: { token, timePeriod }
       });
 
       const timeout = setTimeout(() => {

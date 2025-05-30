@@ -7,10 +7,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 if (!isMainThread) {
-  const { token } = workerData;
+  const { token, timePeriod } = workerData;
   
   const pythonScript = path.join(__dirname, '../scripts/scrape_token.py');
-  const process = spawn('py', [pythonScript, token]);
+  const process = spawn('py', [pythonScript, token, timePeriod]);
   
   let output = '';
   let errorOutput = '';

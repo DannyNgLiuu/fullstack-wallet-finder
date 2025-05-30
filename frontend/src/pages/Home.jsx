@@ -19,6 +19,7 @@ const HomePage = () => {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [selectedCoin, setSelectedCoin] = useState(null);
   const [walletDetails, setWalletDetails] = useState(null);
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState('30d');
 
   // JWT Protection - Check authentication on component mount
   useEffect(() => {
@@ -57,7 +58,6 @@ const HomePage = () => {
     setIsScanning(true);
     setResults([]);
     
-    // Parse tokens and their names
     const tokens = tokenList.split('\n')
       .map(t => t.trim())
       .filter(t => t.length > 0)
@@ -74,7 +74,10 @@ const HomePage = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ tokens: tokens.map(t => t.token) })
+        body: JSON.stringify({ 
+          tokens: tokens.map(t => t.token),
+          timePeriod: selectedTimePeriod
+        })
       });
 
       if (!response.ok) {
@@ -104,14 +107,8 @@ const HomePage = () => {
                   console.log(`Completed: ${data.completed}/${data.total}`);
                   break;
                 case 'complete':
-                  console.log('🎉 Final results received:', data.results);
-                  
                   if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-                    console.log('✅ Setting results in state');
-                    // Normalize the results and add token names
                     const normalizedResults = data.results.map(result => {
-                      console.log('Processing result:', result);
-                      
                       let walletData;
                       if (result.address && typeof result.address === 'object' && result.address.address) {
                         walletData = {
@@ -121,15 +118,6 @@ const HomePage = () => {
                           pnl: result.address.pnl || '$0',
                           tokens_bought: result.address.tokens_bought || '0',
                           tokens_sold: result.address.tokens_sold || '0'
-                        };
-                      } else if (typeof result.address === 'string') {
-                        walletData = {
-                          address: result.address,
-                          bought: result.bought || '$0',
-                          sold: result.sold || '$0',
-                          pnl: result.pnl || '$0',
-                          tokens_bought: result.tokens_bought || '0',
-                          tokens_sold: result.tokens_sold || '0'
                         };
                       } else if (typeof result === 'string') {
                         walletData = {
@@ -170,10 +158,8 @@ const HomePage = () => {
                       };
                     });
                     
-                    console.log('Normalized results:', normalizedResults);
                     setResults(normalizedResults);
                   } else {
-                    console.log('❌ No results to display - results array is empty or undefined');
                     setResults([]);
                   }
                   setIsScanning(false);
@@ -275,20 +261,15 @@ const HomePage = () => {
 
   // Helper function to get token-specific trading data
   const getTokenSpecificData = (token, field) => {
-    console.log('🔍 Getting token data for:', token, field);
-    console.log('💾 Available tokenData:', walletDetails?.tokenData);
-    
     // Use the token address for looking up data
     const tokenAddress = typeof token === 'string' ? token : token.address;
     
     // Use real per-token data from the intersection results
     if (walletDetails?.tokenData && walletDetails.tokenData[tokenAddress]) {
       const tokenData = walletDetails.tokenData[tokenAddress];
-      console.log('✅ Found token data:', tokenData);
       return tokenData[field] || '$0';
     }
     
-    console.log('❌ No token data found');
     return '$0';
   };
 
@@ -390,28 +371,53 @@ const HomePage = () => {
                 transition={{ duration: 0.3 }}
                 className={`${cardClasses} border rounded-xl p-6`}
               >
-                <h2 className="text-xl font-semibold mb-4">Token Scanner</h2>
-                <textarea
-                  value={tokenList}
-                  onChange={(e) => setTokenList(e.target.value)}
-                  placeholder="Paste your token pairs and names here (one per line)...&#10;Example:&#10;4m1vwsxqes9gcgeeftw97agh65dbpdupj4dugsoebrj2 bump&#10;arwzsvwhpns5s2vaztv41kra4qvrizbh3as6zwbf5usa yapper&#10;auhtkq1h9oumstmoyqu9qccsssgnrxkt9pobu3ykwktk glmps"
-                  className={`w-full h-64 p-4 border rounded-lg resize-none ${
-                    isDarkMode 
-                      ? 'bg-slate-700 border-slate-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  }`}
-                />
-                <button
-                  onClick={handleScan}
-                  disabled={isScanning || !tokenList.trim()}
-                  className={`w-full mt-4 py-3 px-4 rounded-lg font-medium transition-all ${
-                    isScanning || !tokenList.trim()
-                      ? 'bg-gray-500 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 transform hover:-translate-y-0.5'
-                  } text-white shadow-lg`}
-                >
-                  {isScanning ? 'Scanning...' : 'Scan Wallets'}
-                </button>
+                <div className="flex flex-col space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">Token Scanner</h2>
+                    <div className="flex">
+                      {['30d', '7d', '3d', '1d'].map((period) => (
+                        <button
+                          key={period}
+                          onClick={() => setSelectedTimePeriod(period)}
+                          className={`px-4 py-2 text-sm font-medium border-r last:border-r-0 transition-colors ${
+                            selectedTimePeriod === period
+                              ? isDarkMode
+                                ? 'bg-slate-700 text-white'
+                                : 'bg-gray-100 text-gray-900'
+                              : isDarkMode
+                                ? 'bg-slate-800 text-gray-400 hover:text-white hover:bg-slate-700'
+                                : 'bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                          }`}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <textarea
+                    value={tokenList}
+                    onChange={(e) => setTokenList(e.target.value)}
+                    placeholder="Paste your token pairs and names here (one per line)...&#10;Example:&#10;4m1vwsxqes9gcgeeftw97agh65dbpdupj4dugsoebrj2 bump&#10;arwzsvwhpns5s2vaztv41kra4qvrizbh3as6zwbf5usa yapper&#10;auhtkq1h9oumstmoyqu9qccsssgnrxkt9pobu3ykwktk glmps"
+                    className={`w-full h-64 p-4 border rounded-lg resize-none ${
+                      isDarkMode 
+                        ? 'bg-slate-700 border-slate-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+
+                  <button
+                    onClick={handleScan}
+                    disabled={isScanning || !tokenList.trim()}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                      isScanning || !tokenList.trim()
+                        ? 'bg-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 transform hover:-translate-y-0.5'
+                    } text-white shadow-lg`}
+                  >
+                    {isScanning ? 'Scanning...' : 'Scan Wallets'}
+                  </button>
+                </div>
               </motion.div>
 
               {/* Right Column - Enhanced Results */}

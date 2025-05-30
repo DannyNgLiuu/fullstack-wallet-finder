@@ -24,7 +24,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 router.post('/scan', authenticateToken, async (req, res) => {
-  const { tokens } = req.body;
+  const { tokens, timePeriod } = req.body;  // Get timePeriod from request body
   
   if (!tokens || !Array.isArray(tokens) || tokens.length === 0) {
     return res.status(400).json({ 
@@ -42,7 +42,7 @@ router.post('/scan', authenticateToken, async (req, res) => {
     'Access-Control-Allow-Headers': 'Cache-Control'
   });
 
-  const scanner = new TokenScanner(3); // Max 3 parallel scans
+  const scanner = new TokenScanner(3);  // Remove default time period
   
   const progressCallback = (update) => {
     res.write(`data: ${JSON.stringify(update)}\n\n`);
@@ -56,7 +56,8 @@ router.post('/scan', authenticateToken, async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const results = await scanner.scanTokens(tokens, progressCallback);
+    // Pass timePeriod to scanTokens
+    const results = await scanner.scanTokens(tokens, progressCallback, timePeriod);
     
     // Find intersections
     const intersections = findIntersections(results);
