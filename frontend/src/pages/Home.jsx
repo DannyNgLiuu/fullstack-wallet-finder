@@ -349,18 +349,36 @@ const HomePage = () => {
         const wallet = savedWallets.find(w => w._id === walletId);
         return wallet ? wallet.address : null;
       })
-      .filter(Boolean)
-      .join('\n');
+      .filter(Boolean);
 
-    if (selectedAddresses) {
-      const blob = new Blob([selectedAddresses], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `wallets_${exportPlatform.toLowerCase()}.txt`;
-      a.click();
-      setShowExportModal(false);
+    if (selectedAddresses.length === 0) return;
+
+    let fileContent, fileName, mimeType;
+
+    if (exportPlatform === 'Photon') {
+      // Create JSON format for Photon
+      const photonData = selectedAddresses.map(address => ({
+        address: address,
+        tags: ["dev"]
+      }));
+      
+      fileContent = JSON.stringify(photonData, null, 2);
+      fileName = `wallets_photon.txt`;
+      mimeType = 'text/plain';
+    } else {
+      // Plain text format for other platforms (Axiom, BullX)
+      fileContent = selectedAddresses.join('\n');
+      fileName = `wallets_${exportPlatform.toLowerCase()}.txt`;
+      mimeType = 'text/plain';
     }
+
+    const blob = new Blob([fileContent], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    setShowExportModal(false);
   };
 
   // Helper function to format trading data
